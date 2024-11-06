@@ -130,12 +130,11 @@ class NYUv2Depth(BaseDataset):
         depth = np.expand_dims(depth, axis=2)
         depth = depth.astype("float32")
         image = image.astype("float32")
-        depth_meters /= 1000.0
-        depth_meters = np.clip(depth_meters, 0, 1)
+        depth /= 1000.0
+        depth = np.clip(depth, 0, 1)
         image /= 255.0
 
-        return image, depth_meters
-
+        return image, depth
 
 def get_tf_nyuv2_ds(data_path, args):
     nyuv2_ds_train = NYUv2Depth(

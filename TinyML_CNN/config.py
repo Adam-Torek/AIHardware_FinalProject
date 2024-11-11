@@ -32,7 +32,7 @@ classes = [
 
 class datacfg:
     h, w = 64, 64
-    img_size = (32, 32)
+    img_size = (64, 64)
     num_classes = len(classes)
     classes = classes
     in_channels = 1
@@ -56,7 +56,7 @@ class metacfg:
     do_overfit = False
     do_shuffle = True
     do_subsample = True
-    batch_size = 32
+    batch_size = 8
     take_first_n = 30
 
     is_cluster = os.path.exists("/cluster")

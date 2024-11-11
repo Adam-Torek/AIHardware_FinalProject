@@ -11,6 +11,10 @@ class Converter:
     def keras_to_tflite(self, fp_model, model_name, do_return_path=False):
         # Convert the model to TFLite without quantization
         converter = tf.lite.TFLiteConverter.from_keras_model(fp_model)
+        converter.target_spec.supported_ops = [
+            tf.lite.OpsSet.TFLITE_BUILTINS, # enable LiteRT ops.
+            tf.lite.OpsSet.SELECT_TF_OPS # enable TensorFlow ops.
+        ]
         fp_tflite_model = converter.convert()
 
         # Save the model to disk
@@ -42,7 +46,10 @@ class Converter:
     def dynamic_range_quantization(self, fp_model, model_name):
         # Convert the model to TFLite with quantization
         converter = tf.lite.TFLiteConverter.from_keras_model(fp_model)
-        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        converter.target_spec.supported_ops = [
+            tf.lite.OpsSet.TFLITE_BUILTINS, # enable LiteRT ops.
+            tf.lite.OpsSet.SELECT_TF_OPS # enable TensorFlow ops.
+        ]
         dynR_quant_tflite_model = converter.convert()
 
         # Save the model to disk
@@ -77,10 +84,15 @@ class Converter:
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
         converter.representative_dataset = representative_data_gen
         # Ensure that if any ops can't be quantized, the converter throws an error
-        converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+
+        converter.target_spec.supported_ops = [
+            tf.lite.OpsSet.TFLITE_BUILTINS, # enable LiteRT ops.
+            tf.lite.OpsSet.SELECT_TF_OPS, # enable TensorFlow ops.
+            tf.lite.OpsSet.TFLITE_BUILTINS_INT8
+        ]
         # Set the input and output tensors to uint8 (APIs added in r2.3)
-        converter.inference_input_type = tf.uint8
-        converter.inference_output_type = tf.uint8
+        converter.inference_input_type = tf.int8
+        converter.inference_output_type = tf.int8
 
         tflite_model_quant_int8 = converter.convert()
 

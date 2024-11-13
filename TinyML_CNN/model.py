@@ -4,7 +4,10 @@ import tensorflow as tf
 import tensorflow_model_optimization as tfmot
 from tensorflow_model_optimization.python.core.keras.compat import keras
 
-
+"""Function to construct and return the depth estimation CNN model based on
+the input image size and number of channels. Note that the depth images are
+the same size as the input images but are in grayscale. This function also has
+"""
 def get_model(
     img_size,
     in_channels=3,

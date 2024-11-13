@@ -1,5 +1,7 @@
 import os
 
+"""Converts a FlatBuffer hexadecimal array into
+a hardcoded C file for use on an embedded microcontroller."""
 def hex_to_c_array(hex_data, var_name):
     c_str = ""
 
@@ -38,7 +40,9 @@ def hex_to_c_array(hex_data, var_name):
 
     return c_str
 
-
+"""Saves a trained TFLite model to a C header file. Uses 
+hex_to_c_array to convert the TFLite Flat Buffer format
+into a hardcoded C array that is saved to disk in an h file."""
 def write_model_h(model_name, model, dst_dir="cfiles"):
     # check if dir 'cfiles' exists, if not create it
     if not os.path.exists(dst_dir):

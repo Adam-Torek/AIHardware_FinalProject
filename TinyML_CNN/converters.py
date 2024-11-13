@@ -3,11 +3,15 @@ import os
 import numpy as np
 import tensorflow as tf
 
-
+"""Converter class that will take a compil (and ideally trained) 
+Keras model and convert it into a TFLite model and saving the 
+file to disk. Also supports quantizing the TFLite model during conversion."""
 class Converter:
     def __init__(self, cfg):
         self.cfg = cfg
 
+    """Converts a given compiled (and trained) Keras model to the TFLIte file
+    format for inference on a microcontroller or other constrained device."""
     def keras_to_tflite(self, fp_model, model_name, do_return_path=False):
         # Convert the model to TFLite without quantization
         converter = tf.lite.TFLiteConverter.from_keras_model(fp_model)
@@ -65,6 +69,8 @@ class Converter:
         )
         return dynR_quant_tflite_model
 
+    # Prints out the input and output types of the converted 
+    # TFLite model
     def check_quantized_model(self, fp_model):
         interpreter = tf.lite.Interpreter(model_content=fp_model)
         input_type = interpreter.get_input_details()[0]["dtype"]
@@ -72,6 +78,8 @@ class Converter:
         output_type = interpreter.get_output_details()[0]["dtype"]
         print("output: ", output_type)
 
+    # Inline function for quantizing example input images to provide
+    # context to the TFLite quantizing converter
     def eight_bit_quantization(self, fp_model, train_ds, model_name):
         def representative_data_gen():
             for input_value, depth in train_ds.take(100):

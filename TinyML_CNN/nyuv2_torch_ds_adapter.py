@@ -8,47 +8,66 @@ import os
 import csv
 
 from config import cfg
-from tensorflow_model_optimization.python.core.keras.compat import keras
 
+"""Tensorflow-based data loader for the NYU2 depth image dataset. This utility
+class lets us load both our test and training datasets using two or three lines
+of code in two or three lines. This class includes image augmentation functionality
+that will randomly flip and crop images and will always resize the image if a different
+size is provided. """
 class NYUV2DataSet: 
     def __init__(self, dataset_path, csv_name, crop_size, scale_size=None):
+        # initialize the data loader parameters 
         self.dataset_path = dataset_path
         self.input_images = []
         self.depth_images = []
         self.crop_size = crop_size
         self.scale_size = scale_size
 
+        # Create image transformations using the albumentations library 
+        # (Applies image augmentation using OpenCV in an efficient way.)
         self.image_transforms = A.Compose([
             A.HorizontalFlip(p=0.2),
             A.RandomCrop(width=crop_size[0], height=crop_size[1]),
             A.Resize(width=self.scale_size[0], height=self.scale_size[1]),
         ])
 
+        # Open the CSV file that contains the paths to the input and 
+        # depth estimation images 
         with open(os.path.join(dataset_path, csv_name)) as training_csv:
             csv_content = csv.reader(training_csv, delimiter=',')
+            # Assemble the file paths for the input and depth images 
             for row in csv_content:
                 input_image_path = os.path.join(*(row[0].split(os.path.sep)[1:]))
                 depth_image_path = os.path.join(*(row[1].split(os.path.sep)[1:]))
                 self.input_images.append(os.path.join(self.dataset_path,input_image_path))
                 self.depth_images.append(os.path.join(self.dataset_path,depth_image_path))
 
+        # Get the length of the dataset
         self.dataset_size = len(self.input_images)
 
-
+    """Get the length of the NYU2 dataset."""
     def __len__(self) :
         return self.dataset_size
     
+    """Get an input image and depth image from the NYU2 data loader."""
     def __getitem__(self, idx):
+        # Read the input image from the file path using OpenCV
         image = cv2.imread(self.input_images[idx]).astype("float32")
+        # Convert the input image to grayscale
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)[..., np.newaxis]
+        # Load in the grayscale depth image from its file path using openCV
         depth_image = cv2.imread(self.depth_images[idx], cv2.IMREAD_UNCHANGED).astype("float32")
 
+        # Normalize the input and depth iamges
         image /= 255
         depth_image /= 255
 
+        # Apply image augmentation on both the depth image and 
+        # input image 
         image = self.image_transforms(image=image)["image"]
         depth_image = self.image_transforms(image=depth_image)["image"]
 
+        # Convert the input and depth images into tensorflow tensors and return them
         tf_image = tf.convert_to_tensor(image)
         tf_depth_image = tf.expand_dims(tf.convert_to_tensor(depth_image),2)
         
@@ -57,23 +76,32 @@ class NYUV2DataSet:
     def on_epoch_end(self):
         pass
 
-
+"""Helper function used to construct a NYU2 data generator based on the NYU2DataSet 
+data loader class. This function just constructs the data loader and sets the batch
+size of the input data. """
 def get_nyu2_data_generator(batch_size, dataset_path, csv_name, crop_size, scale_size):
 
+    # Construct the data loader class
     dataset = NYUV2DataSet(dataset_path, csv_name, crop_size, scale_size)
 
+    # Set the output dimensions so the data geneartor knows what the data loader
+    # is outputting 
     output_signature = (tf.TensorSpec(shape=(*scale_size, 1), dtype=tf.float32),
                         tf.TensorSpec(shape=(*scale_size, 1), dtype=tf.float32))
     
+    # Generator function that returns a tuple containing the input image and depth
+    # image 
     def generator(ds):
         for sample in ds:
             image, depth_image = sample
             yield (image, depth_image)
     
+    # Construct the NYU2 data generator from the data loader using the data loader
+    # class and generator function.
     data_generator = tf.data.Dataset.from_generator(partial(generator, ds=dataset), output_signature=output_signature)
 
+    # Set the batch size of the data generator and return it
     data_generator = data_generator.batch(batch_size=batch_size)
-
     return data_generator
     
 

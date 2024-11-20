@@ -66,7 +66,7 @@ def plot_eval_results(pred_depth, true_depth, rgb, history=None):
     axs[1].imshow(true_depth[..., 0], cmap="gray")
     axs[1].set_title("True depth")
     axs[2].imshow(rgb)
-    axs[2].set_title("RGB")
+    axs[2].set_title("Input Image")
     plt.show()
 
 """Plot the distribution of weights inside a compiled Keras
